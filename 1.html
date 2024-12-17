@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Scan Trigger</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #2b5876, #4e4376);
+            position: relative;
+        }
+
+        #scanBox {
+            width: 200px;
+            height: 200px;
+            background-image: url('4.png'); /* Your image for the scan box */
+            background-size: cover;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        #scanBox:hover {
+            transform: scale(1.1);
+        }
+
+        #videoElement {
+            width: 640px;
+            height: 480px;
+            border: 2px solid white;
+            border-radius: 8px;
+            display: none;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 8px;
+        }
+
+        .message {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        .timer {
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            position: absolute;
+            top: 80%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Audio for Background Music -->
+<audio id="backgroundMusic" loop>
+    <source src="1.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+</audio>
+
+<!-- Box to click to start the scan -->
+<div id="scanBox"></div>
+
+<!-- Video Element for Webcam -->
+<video id="videoElement" autoplay></video>
+<canvas id="canvas"></canvas>
+
+<div class="message" id="message">Click the box to start scanning...</div>
+<div class="timer" id="timer">10</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"></script>
+<script>
+    const scanBox = document.getElementById('scanBox');
+    const video = document.getElementById('videoElement');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const message = document.getElementById('message');
+    const timerElement = document.getElementById('timer');
+    const backgroundMusic = document.getElementById('backgroundMusic');
+
+    let scanTime = 10; // Time to scan in seconds
+    let interval;
+    let scanStarted = false;
+
+    // Initialize face detection
+    const faceDetection = new faceDetection.FaceDetection({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+    });
+
+    faceDetection.setOptions({
+        model: 'short',
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+
+    // Start webcam feed
+    async function startWebcam() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' }
+            });
+            video.srcObject = stream;
+            video.style.display = 'block';  // Show video feed once available
+        } catch (error) {
+            console.error('Error accessing webcam: ', error);
+            message.textContent = "Unable to access webcam!";
+        }
+    }
+
+    // Process video and detect face
+    function processVideoFrame() {
+        faceDetection.send({ image: video });
+    }
+
+    // Handle face detection results
+    faceDetection.onResults((results) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous frame
+
+        if (results.detections.length > 0) {
+            // Draw bounding box around face
+            const boundingBox = results.detections[0].boundingBox;
+            ctx.beginPath();
+            ctx.rect(boundingBox.xCenter - boundingBox.width / 2, boundingBox.yCenter - boundingBox.height / 2, boundingBox.width, boundingBox.height);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'green';
+            ctx.stroke();
+
+            message.textContent = "Face detected!";
+            startRedirectTimer();
+        } else {
+            message.textContent = "Scan your face to proceed...";
+        }
+    });
+
+    // Start countdown timer
+    function startRedirectTimer() {
+        interval = setInterval(() => {
+            scanTime--;
+            timerElement.textContent = scanTime;
+
+            if (scanTime <= 0) {
+                clearInterval(interval);
+                window.location.href = "2.html"; // Redirect after 10 seconds
+            }
+        }, 1000);
+    }
+
+    // Start webcam feed and face detection after video is loaded
+    startWebcam();
+    video.onloadeddata = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        setInterval(processVideoFrame, 100); // Check every 100ms for face detection
+    };
+
+    // Start scan and music when the box is clicked
+    scanBox.addEventListener('click', () => {
+        if (!scanStarted) {
+            scanStarted = true;
+            backgroundMusic.play();  // Start background music
+            message.textContent = "Scan started...";  // Change message
+            startRedirectTimer();  // Start the countdown
+        }
+    });
+</script>
+
+</body>
+</html>

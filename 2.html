@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis Voice Assistant</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: radial-gradient(circle, #020024, #090979, #00d4ff);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .jarvis-container {
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .circle {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0, 255, 153, 0.7), rgba(0, 204, 255, 0.7));
+            box-shadow: 0 0 30px 10px rgba(0, 255, 153, 0.6), 0 0 60px 20px rgba(0, 204, 255, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: rotate 4s linear infinite;
+            position: relative;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .circle img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+        }
+
+        .chat-output {
+            height: 250px;
+            overflow-y: auto;
+            margin: 20px auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 153, 0.5);
+            box-shadow: 0 0 10px rgba(0, 255, 153, 0.3);
+            width: 100%;
+        }
+
+        .chat-output div {
+            margin: 5px 0;
+        }
+
+        .chat-output .bot {
+            color: rgba(0, 255, 153, 1);
+            font-weight: bold;
+        }
+
+        .chat-output .user {
+            color: rgba(0, 204, 255, 1);
+            font-weight: bold;
+        }
+
+        .chat-input-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .chat-input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid rgba(0, 255, 153, 0.5);
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 16px;
+        }
+
+        .chat-submit {
+            background: linear-gradient(135deg, #00ccff, #00ff99);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 153, 0.5);
+            font-size: 16px;
+        }
+
+        .chat-submit:hover {
+            background: linear-gradient(135deg, #00ff99, #00ccff);
+        }
+
+        /* Popup styling */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 255, 153, 0.7);
+        }
+
+        .popup input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 153, 0.5);
+            color: white;
+            border-radius: 5px;
+        }
+
+        .popup button {
+            background: linear-gradient(135deg, #00ccff, #00ff99);
+            padding: 10px 20px;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background: linear-gradient(135deg, #00ff99, #00ccff);
+        }
+
+        /* Image display styling */
+        .uploaded-images {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 10px;
+        }
+
+        .uploaded-images img {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 0 10px rgba(0, 255, 153, 0.5);
+        }
+
+        /* Music display styling */
+        .music-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .music-list audio {
+            width: 80%;
+            margin: 10px 0;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="jarvis-container">
+    <div class="circle">
+        <img src="https://via.placeholder.com/140" alt="AI Image" id="jarvis-icon">
+    </div>
+    <div class="chat-output" id="chat-output"></div>
+    <div class="chat-input-container">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Ask me anything...">
+        <button id="chat-submit" class="chat-submit">Send</button>
+    </div>
+</div>
+
+<!-- Popup for showing all images -->
+<div id="image-popup" class="popup">
+    <div class="popup-content">
+        <h3>Uploaded Images</h3>
+        <div class="uploaded-images" id="uploaded-images"></div>
+        <button id="close-image-popup">Close</button>
+    </div>
+</div>
+
+<!-- Popup for showing all music -->
+<div id="music-popup" class="popup">
+    <div class="popup-content">
+        <h3>Uploaded Music</h3>
+        <div class="music-list" id="music-list"></div>
+        <button id="close-music-popup">Close</button>
+    </div>
+</div>
+
+<!-- Popup for setting custom commands -->
+<div id="popup" class="popup">
+    <div class="popup-content">
+        <h3>Set Custom Command</h3>
+        <input type="text" id="command-input" placeholder="Enter command (e.g., /hello)">
+        <input type="text" id="response-input" placeholder="Enter response">
+        <button id="save-command">Save Command</button>
+        <button id="close-popup">Close</button>
+    </div>
+</div>
+
+<script>
+    const chatOutput = document.getElementById('chat-output');
+    const chatInput = document.getElementById('chat-input');
+    const chatSubmit = document.getElementById('chat-submit');
+    const imagePopup = document.getElementById('image-popup');
+    const uploadedImagesContainer = document.getElementById('uploaded-images');
+    const closeImagePopupButton = document.getElementById('close-image-popup');
+    const musicPopup = document.getElementById('music-popup');
+    const musicListContainer = document.getElementById('music-list');
+    const closeMusicPopupButton = document.getElementById('close-music-popup');
+    const popup = document.getElementById('popup');
+    const commandInput = document.getElementById('command-input');
+    const responseInput = document.getElementById('response-input');
+    const saveCommandButton = document.getElementById('save-command');
+    const closePopupButton = document.getElementById('close-popup');
+
+    let customCommands = JSON.parse(localStorage.getItem('customCommands')) || [];
+    let uploadedPhotos = JSON.parse(localStorage.getItem('uploadedPhotos')) || [];
+    let uploadedMusic = JSON.parse(localStorage.getItem('uploadedMusic')) || [];
+
+    // Display chat messages
+    function addMessage(sender, message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = sender;
+        messageDiv.textContent = `${sender === 'bot' ? 'Jarvis' : 'You'}: ${message}`;
+        chatOutput.appendChild(messageDiv);
+        chatOutput.scrollTop = chatOutput.scrollHeight; // Auto-scroll to the bottom
+    }
+
+    // Speak the bot's response
+    function speak(text) {
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.pitch = 1;
+        utterance.rate = 1;
+        utterance.volume = 1;
+        utterance.voice = synth.getVoices().find(voice => voice.lang === "en-US") || synth.getVoices()[0];
+        synth.speak(utterance);
+    }
+
+    // Command handler
+    function handleCommand(input) {
+        const lowerInput = input.toLowerCase();
+
+        if (lowerInput === "/reset") {
+            localStorage.removeItem('customCommands');
+            customCommands = [];
+            addMessage('bot', "All commands have been reset.");
+            speak("All commands have been reset.");
+            return;
+        }
+
+        if (lowerInput === "/photo") {
+            // Trigger file upload
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.multiple = true;
+            fileInput.addEventListener('change', function(event) {
+                const files = event.target.files;
+                for (let i = 0; i < files.length; i++) {
+                    uploadedPhotos.push(URL.createObjectURL(files[i]));
+                }
+                localStorage.setItem('uploadedPhotos', JSON.stringify(uploadedPhotos));
+                addMessage('bot', `${files.length} image(s) uploaded successfully.`);
+                speak(`${files.length} image(s) uploaded successfully.`);
+            });
+            fileInput.click();
+            return;
+        }
+
+        if (lowerInput === "/help") {
+            const commandList = `
+                Available commands:
+                /photo - Upload images
+                /ishow - Show all uploaded images
+                /setmusic - Set music file
+                /mshow - Show all music files
+                /help - Show this list of commands
+            `;
+            addMessage('bot', commandList);
+            speak(commandList);
+            return;
+        }
+
+        if (lowerInput.startsWith("/setmusic")) {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'audio/*';
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    uploadedMusic.push(URL.createObjectURL(file));
+                    localStorage.setItem('uploadedMusic', JSON.stringify(uploadedMusic));
+                    addMessage('bot', `Music file "${file.name}" added successfully.`);
+                    speak(`Music file "${file.name}" added successfully.`);
+                }
+            });
+            fileInput.click();
+            return;
+        }
+
+        if (lowerInput === "/mshow") {
+            musicListContainer.innerHTML = '';
+            uploadedMusic.forEach(musicUrl => {
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = musicUrl;
+                musicListContainer.appendChild(audio);
+            });
+            musicPopup.style.display = 'flex';
+            return;
+        }
+
+        // Check custom commands
+        const command = customCommands.find(cmd => cmd.command.toLowerCase() === lowerInput);
+        if (command) {
+            addMessage('bot', command.response);
+            speak(command.response);
+        } else {
+            addMessage('bot', "Sorry, I don't understand that command.");
+            speak("Sorry, I don't understand that command.");
+        }
+    }
+
+    // Event listeners
+    chatSubmit.addEventListener('click', () => {
+        const userInput = chatInput.value.trim();
+        if (userInput) {
+            addMessage('user', userInput);
+            speak(userInput);
+            handleCommand(userInput);
+            chatInput.value = ''; // Clear input field
+        }
+    });
+
+    // Handle custom command saving
+    saveCommandButton.addEventListener('click', () => {
+        const command = commandInput.value.trim();
+        const response = responseInput.value.trim();
+        if (command && response) {
+            customCommands.push({ command, response });
+            localStorage.setItem('customCommands', JSON.stringify(customCommands));
+            addMessage('bot', `Command "/${command}" has been saved.`);
+            speak(`Command "/${command}" has been saved.`);
+            commandInput.value = '';
+            responseInput.value = '';
+            popup.style.display = 'none';
+        }
+    });
+
+    // Close image popup
+    closeImagePopupButton.addEventListener('click', () => {
+        imagePopup.style.display = 'none';
+    });
+
+    // Close music popup
+    closeMusicPopupButton.addEventListener('click', () => {
+        musicPopup.style.display = 'none';
+    });
+
+    // Open custom command popup
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/') {
+            popup.style.display = 'flex';
+        }
+    });
+
+    // Close popup
+    closePopupButton.addEventListener('click', () => {
+        popup.style.display = 'none';
+    });
+
+    // Initial instructions
+    addMessage('bot', "Welcome! You can upload photos with /photo, show them with /ishow, add music with /setmusic, and view all commands with /help.");
+    speak("Welcome! You can upload photos with /photo, show them with /ishow, add music with /setmusic, and view all commands with /help.");
+</script>
+
+</body>
+</html>

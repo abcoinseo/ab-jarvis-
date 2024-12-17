@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS Login</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #001f00; /* Dark green background */
+            color: #00ff00; /* Bright green text for JARVIS look */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            width: 400px;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            background: rgba(0, 30, 0, 0.8); /* Transparent green overlay */
+            box-shadow: 0 0 20px #00ff00;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+
+        #passwordInput {
+            width: 100%;
+            height: 40px;
+            margin-bottom: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            background: transparent;
+            color: #00ff00;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .keypad button {
+            height: 50px;
+            font-size: 18px;
+            border: 2px solid #00ff00;
+            background: transparent;
+            color: #00ff00;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .keypad button:hover {
+            background: #00ff00;
+            color: #001f00;
+        }
+
+        .actions {
+            margin-top: 20px;
+        }
+
+        .actions button {
+            width: 48%;
+            height: 40px;
+            font-size: 16px;
+            margin: 5px 0;
+            border: 2px solid #00ff00;
+            background: transparent;
+            color: #00ff00;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .actions button:hover {
+            background: #00ff00;
+            color: #001f00;
+        }
+
+        /* Custom Alert Styles */
+        .custom-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            padding: 20px;
+            background-color: rgba(0, 30, 0, 0.9); /* Dark green overlay */
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #00ff00;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .custom-alert h2 {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        .custom-alert button {
+            padding: 10px 20px;
+            border: none;
+            background: #00ff00;
+            color: #001f00;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .custom-alert button:hover {
+            background: #004d00;
+            color: #00ff00;
+        }
+
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>JARVIS Login</h1>
+        <input type="password" id="passwordInput" placeholder="Enter Password" readonly>
+        
+        <div class="keypad">
+            <button onclick="addDigit('1')">1</button>
+            <button onclick="addDigit('2')">2</button>
+            <button onclick="addDigit('3')">3</button>
+            <button onclick="addDigit('4')">4</button>
+            <button onclick="addDigit('5')">5</button>
+            <button onclick="addDigit('6')">6</button>
+            <button onclick="addDigit('7')">7</button>
+            <button onclick="addDigit('8')">8</button>
+            <button onclick="addDigit('9')">9</button>
+            <button onclick="clearPassword()">C</button>
+            <button onclick="addDigit('0')">0</button>
+            <button onclick="submitPassword()">✔</button>
+        </div>
+
+        <div class="actions">
+            <button onclick="setPassword()">Set Password</button>
+        </div>
+    </div>
+
+    <!-- Custom Alert -->
+    <div class="custom-alert-overlay" id="customAlertOverlay"></div>
+    <div class="custom-alert" id="customAlert">
+        <h2 id="alertMessage">Custom Alert Message</h2>
+        <button onclick="closeCustomAlert()">OK</button>
+    </div>
+
+    <!-- Background Sound -->
+    <audio id="button-sound" preload="auto">
+        <source src="3.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        // Global variables
+        const MAX_ATTEMPTS = 3;
+        let lockoutTime = 30 * 1000; // Default lockout time 30 seconds (in milliseconds)
+
+        // Play sound function
+        function playSound() {
+            const audio = document.getElementById("button-sound");
+            audio.play().catch((error) => {
+                console.log("Error playing audio:", error);
+            });
+        }
+
+        // Add digits to the password input
+        function addDigit(digit) {
+            playSound(); // Play sound
+            const passwordInput = document.getElementById("passwordInput");
+            passwordInput.value += digit;
+        }
+
+        // Clear the password input
+        function clearPassword() {
+            playSound(); // Play sound
+            document.getElementById("passwordInput").value = "";
+        }
+
+        // Show custom alert
+        function showCustomAlert(message) {
+            document.getElementById("alertMessage").textContent = message;
+            document.getElementById("customAlert").style.display = "block";
+            document.getElementById("customAlertOverlay").style.display = "block";
+        }
+
+        // Close custom alert
+        function closeCustomAlert() {
+            document.getElementById("customAlert").style.display = "none";
+            document.getElementById("customAlertOverlay").style.display = "none";
+        }
+
+        // Set a new password
+        function setPassword() {
+            const storedPassword = localStorage.getItem("jarvisPassword");
+            if (storedPassword) {
+                showCustomAlert("Password is already set. You cannot set it again.");
+                return;
+            }
+
+            const newPassword = prompt("Enter a new password:");
+            if (newPassword) {
+                localStorage.setItem("jarvisPassword", newPassword);
+                showCustomAlert("Password has been set successfully!");
+            } else {
+                showCustomAlert("Password not set. Please try again.");
+            }
+        }
+
+        // Submit and validate the password
+        function submitPassword() {
+            const lockoutUntil = localStorage.getItem("lockoutUntil");
+            if (lockoutUntil && Date.now() < lockoutUntil) {
+                const remainingTime = Math.ceil((lockoutUntil - Date.now()) / 1000);
+                showCustomAlert(`Locked out! Please wait ${remainingTime} seconds.`);
+                return;
+            }
+
+            playSound(); // Play sound
+            const enteredPassword = document.getElementById("passwordInput").value;
+            const storedPassword = localStorage.getItem("jarvisPassword");
+            let attempts = parseInt(localStorage.getItem("attempts")) || 0;
+
+            if (!storedPassword) {
+                showCustomAlert("No password is set. Please set a password first.");
+                return;
+            }
+
+            if (enteredPassword === storedPassword) {
+                localStorage.removeItem("attempts"); // Reset attempts
+                showCustomAlert("Access Granted! Redirecting...");
+                setTimeout(() => {
+                    window.location.href = "1.html"; // Redirect to 1.html
+                }, 2000);
+            } else {
+                attempts += 1;
+                localStorage.setItem("attempts", attempts);
+
+                if (attempts >= MAX_ATTEMPTS) {
+                    // Increase lockout time to 1 minute after 3 failed attempts
+                    lockoutTime = 60 * 1000; // 1 minute lockout
+                    localStorage.setItem("lockoutUntil", Date.now() + lockoutTime);
+                    showCustomAlert(`Access Denied! Too many attempts. Locked out for 1 minute.`);
+                } else {
+                    showCustomAlert(`Access Denied! Incorrect Password. Attempt ${attempts}/${MAX_ATTEMPTS}`);
+                }
+                clearPassword();
+            }
+        }
+
+        // On page load, check lockout status
+        window.onload = function() {
+            const lockoutUntil = localStorage.getItem("lockoutUntil");
+            if (lockoutUntil && Date.now() < lockoutUntil) {
+                const remainingTime = Math.ceil((lockoutUntil - Date.now()) / 1000);
+                showCustomAlert(`Locked out! Please wait ${remainingTime} seconds.`);
+            }
+        };
+    </script>
+
+</body>
+</html>
